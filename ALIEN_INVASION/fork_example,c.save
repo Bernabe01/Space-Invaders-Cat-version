@@ -1,0 +1,7 @@
+ nt m a i n ( ) {
+f ork ( ) ;
+f ork ( ) ;
+f ork ( ) ;
+fprin tf ( s t derr , ” Hell o/ n ” ) ;
+}
+
