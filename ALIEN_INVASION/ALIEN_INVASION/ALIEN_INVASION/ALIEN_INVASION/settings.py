@@ -29,6 +29,9 @@ class Settings:
         self.fleet_drop_speed = 10
         self.alien_spacing = 1.2  # You can adjust this value to control the spacing of the alien fleet
 
+        # to enable AI
+        self.ai_enabled = True
+
         # UFO settings
         self.ufo_speed = 5.0  # Speed of the UFO
 
@@ -42,6 +45,7 @@ class Settings:
         # Alien laser settings
         self.alien_laser_speed = 3.0  # Slower than ship lasers
         
+
 
         self.initialize_dynamic_settings()
 

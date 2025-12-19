@@ -33,16 +33,14 @@ class Ship(Sprite):
         frame_height = 64
         self.explosion_frames = [sprite_sheet.subsurface(pg.Rect(n * frame_width, 0, frame_width, frame_height)) for n in range(8)]
 
-        # Initialize explosion timer (will be used on ship hit)
         self.explosion_timer = None
         self.alive = True
 
         # Velocity vector
-        self.v = Vector(0, 0)  # Velocity vector for movement
+        self.v = Vector(0, 0)
 
-        # Store lasers fired by the ship
+        # Lasers
         self.lasers = pg.sprite.Group()
-
         self.firing = False
         self.fleet = None
 
@@ -56,35 +54,29 @@ class Ship(Sprite):
         self.lasers.empty()
         self.center_ship()
         self.alive = True
-        self.image = pg.image.load('images/ship.bmp')  # Reset to the original ship image
-        self.explosion_timer = None  # Reset the explosion timer
+        self.image = pg.image.load('images/ship.bmp')
+        self.explosion_timer = None
 
     def center_ship(self):
-        """Center the ship on the screen."""
         self.rect.midbottom = self.screen_rect.midbottom
         self.x = float(self.rect.x)
         self.y = float(self.rect.y)
 
     def bound(self):
-        """Ensure the ship stays within the screen boundaries."""
-        x, y, scr_r = self.x, self.y, self.screen_rect
-        self.x = max(0, min(x, scr_r.width - self.rect.width)) 
-        self.y = max(0, min(y, scr_r.height - self.rect.height))
+        self.x = max(0, min(self.x, self.screen_rect.width - self.rect.width))
+        self.y = max(0, min(self.y, self.screen_rect.height - self.rect.height))
 
     def ship_hit(self):
-        """Respond to the ship being hit by reducing ships left and playing explosion animation."""
         self.stats.ships_left -= 1
         print(f"Only {self.stats.ships_left} ships left now")
-        
-        # Play the explosion sound and animation for the ship before game over
-        self.sound.play_explosion()  # Ensure play_explosion is implemented in sounds.py
+        self.sound.play_explosion()
         explosion_timer = Timer(images=self.ai_game.explosion_frames, delta=100, loop_continuously=False)
-        
+
         while not explosion_timer.finished():
             self.screen.blit(explosion_timer.current_image(), self.rect)
             pg.display.flip()
-        
-        self.sb.prep_ships()  # Update scoreboard
+
+        self.sb.prep_ships()
 
         if self.stats.ships_left <= 0:
             self.ai_game.game_over()
@@ -92,19 +84,15 @@ class Ship(Sprite):
 
         self.lasers.empty()
         self.fleet.aliens.empty()
-
         self.center_ship()
         self.fleet.create_fleet()
-
-        sleep(0.5)  # Delay for half a second before resuming game
-
+        sleep(0.5)
 
     def fire_laser(self):
-        """Fire a laser from the ship."""
+        """Fire a laser if limit not reached."""
         if len(self.lasers) < self.settings.lasers_allowed:
-            laser = Laser(self.ai_game, self.rect.midtop)  # Pass ship's position for the laser
-            self.lasers.add(laser)
-            self.sound.play_fireBlaster()  # Play fire blaster sound
+            new_laser = Laser(self.ai_game, self.rect.midtop, direction="up", laser_type="ship")
+            self.lasers.add(new_laser)
 
     def open_fire(self):
         self.firing = True 
@@ -113,42 +101,56 @@ class Ship(Sprite):
         self.firing = False
 
     def update(self):
-        """Update ship's position, fire lasers, and handle the explosion animation."""
         if self.alive:
             self.x += self.v.x
             self.y += self.v.y
-            self.bound()  # Keep the ship within bounds
+            self.bound()
 
             if self.firing:
                 self.fire_laser()
 
             self.lasers.update()
 
-            # Remove lasers that have gone off-screen
             for laser in self.lasers.copy():
                 if laser.rect.bottom <= 0:
                     self.lasers.remove(laser)
 
-            # Draw remaining lasers
             for laser in self.lasers.sprites():
                 laser.draw()
 
             self.draw()
 
         else:
-            # Handle the explosion animation
             if self.explosion_timer and not self.explosion_timer.finished():
                 self.image = self.explosion_timer.current_image()
             elif self.explosion_timer and self.explosion_timer.finished():
-                # Reset after explosion
                 self.reset_ship()
                 self.fleet.create_fleet()
                 sleep(0.5)
 
     def draw(self):
-        """Draw the ship on the screen."""
         self.rect.x, self.rect.y = self.x, self.y
         self.screen.blit(self.image, self.rect)
+
+    # Add these three AI methods
+    def move_right(self):
+        if self.rect.right < self.screen_rect.right:
+            self.v.x = self.settings.ship_speed
+
+    def move_left(self):
+        if self.rect.left > 0:
+            self.v.x = -self.settings.ship_speed
+
+    #def fire_bullet(self):
+    #    """Fire a bullet if limit not reached."""
+     #   if len(self.lasers) < self.settings.bullets_allowed:
+      #      self.sound.play_laser()
+       #     new_laser = self.Laser(self)
+        #    self.lasers.add(new_laser)
+         #   self.sound.play_
+
+    def stop(self):
+        self.v.x = 0
 
 def main():
     print('\n*** message from ship.py --- run from alien_invasions.py\n')

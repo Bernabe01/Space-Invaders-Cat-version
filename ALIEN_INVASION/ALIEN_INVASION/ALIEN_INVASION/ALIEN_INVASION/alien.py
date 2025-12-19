@@ -58,7 +58,14 @@ class Alien(Sprite):
         self.alive = False
         self.timer = Timer(images=self.explosion_frames, delta=100, loop_continuously=False)
         self.ai_game.sound.play_killedSpaceInvader()
-        self.ai_game.calculate_alien_speed()
+
+        # KEEP COMMENTED (used to crash game)
+        # self.ai_game.calculate_alien_speed()
+
+        # Stop AI firing *only during explosion*
+        if hasattr(self.ai_game, "ai_player"):
+            self.ai_game.ai_player.last_fire_time = pg.time.get_ticks()  # AI pauses firing
+            self.ai_game.ship.cease_fire()
 
     def check_edges(self):
         """Return True if alien is at edge of screen."""
@@ -78,7 +85,6 @@ class Alien(Sprite):
 
     def is_eligible_to_fire(self):
         """Return True if this alien is allowed to fire."""
-        # Only allow aliens in the bottom 25% of the screen or randomly selected ones to fire
         return self.rect.y > self.screen.get_rect().height * 0.75 or randint(1, 5000) == 1
 
     def update(self):
@@ -93,8 +99,12 @@ class Alien(Sprite):
 
         self.image = self.timer.current_image()
 
+        # When explosion done → remove and AI firing resumes
         if not self.alive and self.timer.finished():
             self.kill()
+            if hasattr(self.ai_game, "ai_player"):
+                self.ai_game.ship.open_fire()  # AI resumes firing AFTER explosion clears
+            return
 
         self.draw()
 
